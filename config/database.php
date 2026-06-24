@@ -59,11 +59,11 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
-                    // ⭐ TAMBAHKAN INI
-            'options' => extension_loaded('pdo_mysql') ? array_filter([
-            PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
-            PDO::MYSQL_ATTR_SSL_MODE => PDO::SSL_MODE_REQUIRED,
-        ]) : [],
+                   // ⭐ OPTIONS UNTUK AIVEN
+            'options' => [
+                1009 => env('DB_SSLMODE', 'REQUIRED'),  // MYSQL_ATTR_SSL_MODE
+                1010 => env('MYSQL_ATTR_SSL_CA'),       // MYSQL_ATTR_SSL_CA (optional)
+            ],
         ],
 
         'mariadb' => [
