@@ -49,6 +49,7 @@ Route::prefix('v1')->group(function () {
         Route::post('/conversations/{id}/messages', [MessageController::class, 'store']);
         Route::post('/messages/{id}/read', [MessageController::class, 'read']);
         Route::post('/conversations/{id}/read-all', [MessageController::class, 'readAll']);
+        Route::delete('/messages/{id}', [MessageController::class, 'destroy']);
 
         // Feed / Posts Module
         Route::get('/posts', [PostController::class, 'index']);

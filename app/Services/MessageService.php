@@ -158,4 +158,16 @@ class MessageService
             now()->toIso8601String()
         ));
     }
+
+    public function deleteMessage(User $user, int $messageId): void
+    {
+        $message = Message::findOrFail($messageId);
+        
+        if ($message->sender_id !== $user->id) {
+            throw new \Exception('Anda hanya dapat menghapus pesan Anda sendiri.');
+        }
+
+        // Broadcast MessageDeleted event if needed, skipped for simplicity
+        $message->delete();
+    }
 }

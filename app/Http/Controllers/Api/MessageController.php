@@ -76,4 +76,14 @@ class MessageController extends ApiController
             return $this->errorResponse($e->getMessage());
         }
     }
+
+    public function destroy(Request $request, int $id): JsonResponse
+    {
+        try {
+            $this->messageService->deleteMessage($request->user(), $id);
+            return $this->successResponse(null, 'Pesan berhasil dihapus.');
+        } catch (\Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
 }
