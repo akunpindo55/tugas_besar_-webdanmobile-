@@ -15,14 +15,15 @@
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
                 body: JSON.stringify({ content: this.content, visibility: this.visibility })
             })
-            .then(r => r.json())
-            .then(res => {
-                if (res.data) {
+            .then(r => r.json().then(res => ({ ok: r.ok, data: res })))
+            .then(({ ok, data }) => {
+                if (ok && data.data) {
                     this.content = '';
-                    // Add new post to top of feed
-                    window.feedInstance.prependPost(res.data);
-                    this.isSubmitting = false;
+                    window.feedInstance.prependPost(data.data);
+                } else {
+                    alert(data.error || data.message || 'Gagal membuat postingan');
                 }
+                this.isSubmitting = false;
             })
             .catch(() => { alert('Gagal membuat postingan'); this.isSubmitting = false; });
         }
@@ -194,12 +195,15 @@
                     method: 'DELETE',
                     headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
                 })
-                .then(r => r.json())
-                .then(res => {
-                    if (res.success) {
+                .then(r => r.json().then(res => ({ ok: r.ok, data: res })))
+                .then(({ ok, data }) => {
+                    if (ok && data.success) {
                         this.posts = this.posts.filter(p => p.id !== postId);
+                    } else {
+                        alert(data.error || 'Gagal menghapus postingan');
                     }
-                });
+                })
+                .catch(() => alert('Gagal menghapus postingan'));
             },
 
             toggleComments(postId) {
@@ -214,17 +218,20 @@
                     headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
                     body: JSON.stringify({ comment: text })
                 })
-                .then(r => r.json())
-                .then(res => {
-                    if (res.data) {
+                .then(r => r.json().then(res => ({ ok: r.ok, data: res })))
+                .then(({ ok, data }) => {
+                    if (ok && data.data) {
                         const post = this.posts.find(p => p.id === postId);
                         if (post) {
                             if (!post.comments) post.comments = [];
-                            post.comments.push(res.data);
+                            post.comments.push(data.data);
                         }
                         this.commentTexts[postId] = '';
+                    } else {
+                        alert(data.error || data.message || 'Gagal menambahkan komentar');
                     }
-                });
+                })
+                .catch(() => alert('Gagal menambahkan komentar'));
             },
 
             toggleReaction(postId, type) {
@@ -233,26 +240,27 @@
                     headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
                     body: JSON.stringify({ reaction_type: type })
                 })
-                .then(r => r.json())
-                .then(res => {
-                    if (res.reactions) {
+                .then(r => r.json().then(res => ({ ok: r.ok, data: res })))
+                .then(({ ok, data }) => {
+                    if (ok && data.reactions) {
                         const post = this.posts.find(p => p.id === postId);
                         if (post) {
-                            const hasReaction = res.data !== null;
+                            const hasReaction = data.data !== null;
                             if (hasReaction) {
                                 post.user_reaction = type;
                             } else {
                                 post.user_reaction = null;
                             }
                             post.reactions = [];
-                            Object.entries(res.reactions).forEach(([rt, count]) => {
+                            Object.entries(data.reactions).forEach(([rt, count]) => {
                                 for (let i = 0; i < count; i++) {
                                     post.reactions.push({ reaction_type: rt });
                                 }
                             });
                         }
                     }
-                });
+                })
+                .catch(() => {});
             },
 
             formatTime(dateStr) {
