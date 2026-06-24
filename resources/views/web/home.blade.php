@@ -1,38 +1,41 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-2xl mx-auto" x-data="{
-    posts: {{ Js::from($posts) }}
-}">
-    
+<div class="max-w-2xl mx-auto" x-data="feed()" x-init="initFeed()">
     <!-- Create Post Form -->
-    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8" x-data="{
+    <div class="clay bg-white p-6 mb-8" x-data="{
         content: '',
         visibility: 'public',
         isSubmitting: false,
         submitPost() {
-            if(!this.content) return;
+            if(!this.content.trim()) return;
             this.isSubmitting = true;
-            // Kita bisa pakai API endpoint nanti untuk submit via ajax
-            // Untuk saat ini kita cukup console.log
-            console.log('Submitting', this.content, this.visibility);
-            setTimeout(() => {
-                this.content = '';
-                this.isSubmitting = false;
-                alert('Post berhasil dibuat! (Nanti akan disambungkan ke server)');
-            }, 1000);
+            fetch('/posts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                body: JSON.stringify({ content: this.content, visibility: this.visibility })
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res.data) {
+                    this.content = '';
+                    // Add new post to top of feed
+                    window.feedInstance.prependPost(res.data);
+                    this.isSubmitting = false;
+                }
+            })
+            .catch(() => { alert('Gagal membuat postingan'); this.isSubmitting = false; });
         }
     }">
         <h3 class="text-lg font-bold mb-4">Buat Postingan</h3>
-        <textarea x-model="content" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-peach focus:border-brand-peach outline-none resize-none mb-4" rows="3" placeholder="Apa kejadian seru di kampus hari ini?"></textarea>
-        
+        <textarea x-model="content" class="w-full clay-input px-4 py-3 mb-4 resize-none" rows="3" placeholder="Apa kejadian seru di kampus hari ini?"></textarea>
+
         <div class="flex justify-between items-center">
             <div class="flex space-x-2">
-                <button type="button" @click="visibility = 'public'" :class="visibility === 'public' ? 'bg-brand-mint bg-opacity-40 border-brand-mint' : 'bg-white border-gray-200'" class="px-3 py-1 text-sm rounded-full border transition font-medium">Publik</button>
-                <button type="button" @click="visibility = 'private'" :class="visibility === 'private' ? 'bg-brand-lilac bg-opacity-40 border-brand-lilac' : 'bg-white border-gray-200'" class="px-3 py-1 text-sm rounded-full border transition font-medium">Internal</button>
+                <button type="button" @click="visibility = 'public'" :class="visibility === 'public' ? 'bg-brand-mint bg-opacity-40 border-brand-mint' : 'bg-white border-gray-200'" class="clay-sm px-3 py-1 text-sm font-medium transition">Publik</button>
+                <button type="button" @click="visibility = 'private'" :class="visibility === 'private' ? 'bg-brand-lilac bg-opacity-40 border-brand-lilac' : 'bg-white border-gray-200'" class="clay-sm px-3 py-1 text-sm font-medium transition">Internal</button>
             </div>
-            
-            <button @click="submitPost()" :disabled="isSubmitting || !content" class="bg-brand-peach text-gray-900 font-bold py-2 px-6 rounded-xl hover:opacity-90 transition disabled:opacity-50">
+            <button @click="submitPost()" :disabled="isSubmitting || !content.trim()" class="clay-btn bg-brand-peach font-bold py-2 px-6 text-sm disabled:opacity-50">
                 <span x-show="!isSubmitting">Kirim</span>
                 <span x-show="isSubmitting">Loading...</span>
             </button>
@@ -41,41 +44,232 @@
 
     <!-- Feed -->
     <div class="space-y-6">
-        @foreach($posts as $post)
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-            <div class="flex justify-between items-start mb-4">
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 bg-brand-blue rounded-full flex items-center justify-center font-bold text-gray-700">
-                        {{ strtoupper(substr($post->user->name, 0, 1)) }}
+        <template x-for="post in posts" :key="post.id">
+            <div class="clay bg-white p-6 animate-fade-slide-up">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="flex items-center space-x-3">
+                        <a :href="'/profile/' + (post.user?.username || '')" class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-gray-700"
+                            :class="'bg-brand-' + ['blue','mint','peach','lilac'][post.user?.id % 4]">
+                            <span x-text="post.user?.name ? post.user.name.charAt(0).toUpperCase() : '?'"></span>
+                        </a>
+                        <div>
+                            <a :href="'/profile/' + (post.user?.username || '')" class="font-bold text-gray-900 hover:underline" x-text="post.user?.name || 'Unknown'"></a>
+                            <div class="text-xs text-gray-500">
+                                <span x-text="formatTime(post.created_at)"></span>
+                                <span> &bull; </span>
+                                <span x-text="post.visibility === 'public' ? 'Publik' : 'Internal'"></span>
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <div class="font-bold text-gray-900">{{ $post->user->name }}</div>
-                        <div class="text-xs text-gray-500">{{ $post->created_at->diffForHumans() }} &bull; {{ ucfirst($post->visibility) }}</div>
+                    <template x-if="post.user_id === {{ Auth::id() }}">
+                        <button @click="deletePost(post.id)" class="text-gray-400 hover:text-red-500 text-sm clay-sm px-2 py-1">×</button>
+                    </template>
+                </div>
+
+                <p class="text-gray-800 whitespace-pre-wrap mb-4" x-text="post.content"></p>
+
+                <!-- Post Media -->
+                <template x-if="post.media && post.media.length > 0">
+                    <div class="mb-4 space-y-2">
+                        <template x-for="m in post.media" :key="m.id">
+                            <template x-if="m.media_type === 'image'">
+                                <img :src="m.media_url" class="rounded-2xl w-full object-cover max-h-96" loading="lazy">
+                            </template>
+                            <template x-if="m.media_type === 'video'">
+                                <video :src="m.media_url" class="rounded-2xl w-full max-h-96" controls></video>
+                            </template>
+                        </template>
+                    </div>
+                </template>
+
+                <!-- Actions -->
+                <div class="flex items-center space-x-6 text-sm border-t-2 border-gray-100 pt-4">
+                    <!-- Reactions -->
+                    <div class="relative" x-data="{ open: false }">
+                        <button @click="toggleReaction(post.id, 'like'); open = false" class="flex items-center space-x-1.5 hover:scale-105 transition" :class="post.user_reaction === 'like' ? 'text-red-500' : 'text-gray-500'">
+                            <span>❤️</span>
+                            <span class="font-bold text-xs" x-text="post.reactions?.filter(r => r.reaction_type === 'like').length || 0"></span>
+                        </button>
+                    </div>
+                    <button @click="toggleComments(post.id)" class="flex items-center space-x-1.5 text-gray-500 hover:text-brand-blue transition">
+                        <span>💬</span>
+                        <span class="font-bold text-xs" x-text="post.comments?.length || 0"></span>
+                    </button>
+                </div>
+
+                <!-- Comments Section -->
+                <div x-show="openComments === post.id" x-cloak class="mt-4 space-y-3 border-t-2 border-gray-100 pt-4">
+                    <template x-for="comment in post.comments || []" :key="comment.id">
+                        <div class="flex items-start space-x-2">
+                            <div class="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs mt-0.5 flex-shrink-0 bg-brand-lilac">
+                                <span x-text="comment.user?.name?.charAt(0).toUpperCase() || '?'"></span>
+                            </div>
+                            <div class="flex-1 bg-gray-50 rounded-2xl px-3 py-2">
+                                <div class="font-bold text-xs" x-text="comment.user?.name || 'Unknown'"></div>
+                                <p class="text-sm text-gray-700" x-text="comment.comment"></p>
+                            </div>
+                        </div>
+                    </template>
+                    <div class="flex space-x-2">
+                        <input type="text" x-model="commentTexts[post.id]" @keydown.enter.prevent="addComment(post.id)" placeholder="Tulis komentar..." class="flex-1 clay-input px-3 py-2 text-sm">
+                        <button @click="addComment(post.id)" class="clay-sm px-3 py-2 bg-brand-blue text-sm font-bold">Kirim</button>
                     </div>
                 </div>
             </div>
-            
-            <p class="text-gray-800 whitespace-pre-wrap mb-4">{{ $post->content }}</p>
-            
-            <div class="flex items-center space-x-6 text-gray-500 text-sm border-t border-gray-100 pt-4" x-data="{ showComments: false }">
-                <button class="flex items-center space-x-2 hover:text-brand-peach transition">
-                    <span>❤️</span>
-                    <span class="font-bold">{{ $post->likes_count ?? 0 }}</span>
-                </button>
-                <button @click="showComments = !showComments" class="flex items-center space-x-2 hover:text-brand-blue transition">
-                    <span>💬</span>
-                    <span class="font-bold">{{ $post->comments_count ?? 0 }}</span>
-                </button>
-            </div>
-        </div>
-        @endforeach
-        
-        @if(count($posts) == 0)
-        <div class="text-center text-gray-500 py-10">
-            Belum ada postingan. Jadilah yang pertama!
-        </div>
-        @endif
-    </div>
+        </template>
 
+        <template x-if="!loading && posts.length === 0">
+            <div class="text-center py-12 clay bg-white">
+                <div class="text-4xl mb-3">📝</div>
+                <p class="text-gray-500 font-medium">Belum ada postingan</p>
+                <p class="text-gray-400 text-sm mt-1">Jadilah yang pertama berbagi cerita!</p>
+            </div>
+        </template>
+
+        <template x-if="loading">
+            <div class="text-center py-8">
+                <div class="text-gray-400 text-sm">Memuat postingan...</div>
+            </div>
+        </template>
+
+        <template x-if="hasMore">
+            <div class="text-center py-4">
+                <button @click="loadMore()" class="clay-btn px-6 py-2 bg-white text-sm font-bold text-gray-600">Muat lebih banyak</button>
+            </div>
+        </template>
+    </div>
 </div>
+
+<script>
+    function feed() {
+        return {
+            posts: [],
+            loading: true,
+            hasMore: true,
+            page: 1,
+            openComments: null,
+            commentTexts: {},
+
+            initFeed() {
+                window.feedInstance = this;
+                this.loadPosts();
+            },
+
+            loadPosts() {
+                this.loading = true;
+                fetch('/api/v1/posts?page=' + this.page)
+                    .then(r => r.json())
+                    .then(res => {
+                        const newPosts = (res.data || []).map(p => ({
+                            ...p,
+                            user_reaction: p.reactions?.find(r => r.user_id === {{ Auth::id() }})?.reaction_type || null
+                        }));
+                        if (this.page === 1) {
+                            this.posts = newPosts;
+                        } else {
+                            this.posts = [...this.posts, ...newPosts];
+                        }
+                        this.hasMore = res.meta?.current_page < res.meta?.last_page;
+                        this.loading = false;
+                    })
+                    .catch(() => { this.loading = false; });
+            },
+
+            loadMore() {
+                this.page++;
+                this.loadPosts();
+            },
+
+            prependPost(post) {
+                this.posts.unshift({
+                    ...post,
+                    user_reaction: null,
+                    comments: []
+                });
+            },
+
+            deletePost(postId) {
+                if (!confirm('Hapus postingan ini?')) return;
+                fetch('/posts/' + postId, {
+                    method: 'DELETE',
+                    headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+                })
+                .then(r => r.json())
+                .then(res => {
+                    if (res.success) {
+                        this.posts = this.posts.filter(p => p.id !== postId);
+                    }
+                });
+            },
+
+            toggleComments(postId) {
+                this.openComments = this.openComments === postId ? null : postId;
+            },
+
+            addComment(postId) {
+                const text = this.commentTexts[postId];
+                if (!text || !text.trim()) return;
+                fetch('/posts/' + postId + '/comments', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                    body: JSON.stringify({ comment: text })
+                })
+                .then(r => r.json())
+                .then(res => {
+                    if (res.data) {
+                        const post = this.posts.find(p => p.id === postId);
+                        if (post) {
+                            if (!post.comments) post.comments = [];
+                            post.comments.push(res.data);
+                        }
+                        this.commentTexts[postId] = '';
+                    }
+                });
+            },
+
+            toggleReaction(postId, type) {
+                fetch('/posts/' + postId + '/reactions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                    body: JSON.stringify({ reaction_type: type })
+                })
+                .then(r => r.json())
+                .then(res => {
+                    if (res.reactions) {
+                        const post = this.posts.find(p => p.id === postId);
+                        if (post) {
+                            const hasReaction = res.data !== null;
+                            if (hasReaction) {
+                                post.user_reaction = type;
+                            } else {
+                                post.user_reaction = null;
+                            }
+                            post.reactions = [];
+                            Object.entries(res.reactions).forEach(([rt, count]) => {
+                                for (let i = 0; i < count; i++) {
+                                    post.reactions.push({ reaction_type: rt });
+                                }
+                            });
+                        }
+                    }
+                });
+            },
+
+            formatTime(dateStr) {
+                if (!dateStr) return '';
+                const d = new Date(dateStr);
+                const now = new Date();
+                const diff = now - d;
+                const mins = Math.floor(diff / 60000);
+                const hours = Math.floor(diff / 3600000);
+                const days = Math.floor(diff / 86400000);
+                if (mins < 1) return 'Baru saja';
+                if (mins < 60) return mins + 'm yang lalu';
+                if (hours < 24) return hours + 'j yang lalu';
+                if (days < 7) return days + 'h yang lalu';
+                return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+            }
+        }
+    }
+</script>
 @endsection

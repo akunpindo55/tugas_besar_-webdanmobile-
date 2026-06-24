@@ -95,6 +95,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Group invitations sent to this user.
+     */
+    public function groupInvitations(): HasMany
+    {
+        return $this->hasMany(GroupInvitation::class, 'invited_user_id');
+    }
+
+    /**
      * Check if user is an admin.
      */
     public function isAdmin(): bool

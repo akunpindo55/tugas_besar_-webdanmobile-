@@ -32,7 +32,7 @@ class AuthController extends Controller
         if (Auth::attempt(['email' => $credentials['email'], 'password' => $credentials['password']]) ||
             Auth::attempt(['username' => $credentials['email'], 'password' => $credentials['password']])) {
             $request->session()->regenerate();
-            return redirect()->intended('/');
+            return redirect()->intended('/home');
         }
 
         return back()->withErrors([
@@ -45,7 +45,7 @@ class AuthController extends Controller
         $user = $this->authService->register($request->validated());
         Auth::login($user);
         
-        return redirect('/');
+        return redirect('/home');
     }
 
     public function logout(Request $request)
