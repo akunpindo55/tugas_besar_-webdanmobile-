@@ -59,10 +59,11 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
-                // ⭐ TAMBAHKAN INI
-        'options' => [
-            \PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
-        ]
+                    // ⭐ TAMBAHKAN INI
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+            PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+            PDO::MYSQL_ATTR_SSL_MODE => PDO::SSL_MODE_REQUIRED,
+        ]) : [],
         ],
 
         'mariadb' => [
