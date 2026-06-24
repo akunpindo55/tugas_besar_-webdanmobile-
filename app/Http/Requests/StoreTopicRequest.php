@@ -16,6 +16,7 @@ class StoreTopicRequest extends FormRequest
         return [
             'title' => 'required|string|max:150',
             'content' => 'required|string|max:10000',
+            'file' => 'nullable|file|max:10240',
         ];
     }
 }

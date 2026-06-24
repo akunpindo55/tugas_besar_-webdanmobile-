@@ -43,6 +43,7 @@ Route::prefix('v1')->group(function () {
         Route::post('/conversations/{id}/invite', [ConversationController::class, 'invite']);
         Route::post('/invitations/{id}/respond', [ConversationController::class, 'respond']);
         Route::post('/conversations/{id}/leave', [ConversationController::class, 'leave']);
+        Route::delete('/conversations/{id}', [ConversationController::class, 'destroy']);
 
         // Messages Module
         Route::get('/conversations/{id}/messages', [MessageController::class, 'index']);
@@ -53,10 +54,12 @@ Route::prefix('v1')->group(function () {
 
         // Feed / Posts Module
         Route::get('/posts', [PostController::class, 'index']);
+        Route::get('/posts/{id}', [PostController::class, 'show']);
         Route::post('/posts', [PostController::class, 'store']);
         Route::put('/posts/{id}', [PostController::class, 'update']);
         Route::delete('/posts/{id}', [PostController::class, 'destroy']);
         Route::post('/posts/{id}/comments', [PostController::class, 'comment']);
+        Route::delete('/posts/{id}/comments/{commentId}', [PostController::class, 'destroyComment']);
         Route::post('/posts/{id}/reactions', [PostController::class, 'react']);
 
         // Forums Module
@@ -74,6 +77,9 @@ Route::prefix('v1')->group(function () {
         Route::post('/forums/{id}/topics', [ForumController::class, 'createTopic']);
         Route::get('/topics/{id}', [ForumController::class, 'showTopic']);
         Route::post('/topics/{id}/comments', [ForumController::class, 'replyTopic']);
+        Route::delete('/topics/{id}', [ForumController::class, 'destroyTopic']);
+        Route::delete('/comments/{commentId}', [ForumController::class, 'destroyTopicComment']);
+        Route::delete('/forums/{id}', [ForumController::class, 'destroy']);
 
         // Moderation / Reports Module
         Route::post('/reports', [ReportController::class, 'store']);
@@ -82,6 +88,7 @@ Route::prefix('v1')->group(function () {
 
         // Notifications Module
         Route::get('/notifications', [NotificationController::class, 'index']);
+        Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
         Route::put('/notifications/{id}/read', [NotificationController::class, 'read']);
         Route::put('/notifications/read-all', [NotificationController::class, 'readAll']);
 

@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['forum_id', 'user_id', 'title', 'content'])]
+#[Fillable(['forum_id', 'user_id', 'title', 'content', 'file_url', 'media_type'])]
 class ForumTopic extends Model
 {
     use HasFactory;

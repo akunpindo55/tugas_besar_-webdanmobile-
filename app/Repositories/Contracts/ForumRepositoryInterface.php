@@ -38,5 +38,11 @@ interface ForumRepositoryInterface
 
     public function findTopicById(int $id): ?ForumTopic;
 
+    public function deleteTopic(ForumTopic $topic): void;
+
     public function addComment(ForumTopic $topic, User $user, array $data): ForumComment;
+
+    public function deleteComment(ForumComment $comment): void;
+
+    public function deleteForum(Forum $forum): void;
 }

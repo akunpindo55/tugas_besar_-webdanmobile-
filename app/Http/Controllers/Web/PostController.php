@@ -7,6 +7,7 @@ use App\Http\Requests\StorePostRequest;
 use App\Http\Requests\StoreCommentRequest;
 use App\Http\Requests\ToggleReactionRequest;
 use App\Models\Post;
+use App\Models\PostComment;
 use App\Services\PostService;
 use Illuminate\Http\Request;
 
@@ -83,6 +84,20 @@ class PostController extends Controller
             return response()->json([
                 'data' => $comment
             ], 201);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
+    }
+
+    public function destroyComment(Request $request, Post $post, PostComment $comment)
+    {
+        if ($comment->user_id !== $request->user()->id) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        try {
+            $comment->delete();
+            return response()->json(['success' => true]);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 400);
         }

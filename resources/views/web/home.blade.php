@@ -1,24 +1,32 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-2xl mx-auto" x-data="feed()" x-init="initFeed()">
+<script>window.__posts = {!! json_encode($postsJson) !!}; window.__meta = {!! json_encode($meta) !!};</script>
+<div class="max-w-2xl mx-auto" x-data="feed()" x-init="initFeed(__posts, __meta)">
     <!-- Create Post Form -->
     <div class="clay bg-white p-6 mb-8" x-data="{
         content: '',
-        visibility: 'public',
         isSubmitting: false,
+        mediaFiles: [],
         submitPost() {
             if(!this.content.trim()) return;
             this.isSubmitting = true;
+            const fd = new FormData();
+            fd.append('content', this.content);
+            fd.append('visibility', 'public');
+            for (const f of this.mediaFiles || []) {
+                fd.append('media[]', f);
+            }
             fetch('/posts', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-                body: JSON.stringify({ content: this.content, visibility: this.visibility })
+                headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                body: fd
             })
             .then(r => r.json().then(res => ({ ok: r.ok, data: res })))
             .then(({ ok, data }) => {
                 if (ok && data.data) {
                     this.content = '';
+                    this.mediaFiles = [];
                     window.feedInstance.prependPost(data.data);
                 } else {
                     alert(data.error || data.message || 'Gagal membuat postingan');
@@ -31,11 +39,30 @@
         <h3 class="text-lg font-bold mb-4">Buat Postingan</h3>
         <textarea x-model="content" class="w-full clay-input px-4 py-3 mb-4 resize-none" rows="3" placeholder="Apa kejadian seru di kampus hari ini?"></textarea>
 
-        <div class="flex justify-between items-center">
-            <div class="flex space-x-2">
-                <button type="button" @click="visibility = 'public'" :class="visibility === 'public' ? 'bg-brand-mint bg-opacity-40 border-brand-mint' : 'bg-white border-gray-200'" class="clay-sm px-3 py-1 text-sm font-medium transition">Publik</button>
-                <button type="button" @click="visibility = 'private'" :class="visibility === 'private' ? 'bg-brand-lilac bg-opacity-40 border-brand-lilac' : 'bg-white border-gray-200'" class="clay-sm px-3 py-1 text-sm font-medium transition">Internal</button>
-            </div>
+        <div class="mb-3">
+            <label class="flex items-center space-x-2 cursor-pointer text-sm text-gray-600 hover:text-gray-900">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                <span x-text="(mediaFiles || []).length + ' file dipilih'"></span>
+                <input type="file" multiple accept="image/*,video/*" @change="mediaFiles = Array.from($event.target.files)" class="hidden">
+            </label>
+            <template x-if="mediaFiles && mediaFiles.length > 0">
+                <div class="flex flex-wrap gap-2 mt-2">
+                    <template x-for="(f, i) in mediaFiles" :key="i">
+                        <div class="relative">
+                            <template x-if="f.type.startsWith('image/')">
+                                <img :src="URL.createObjectURL(f)" class="w-16 h-16 object-cover rounded-xl">
+                            </template>
+                            <template x-if="!f.type.startsWith('image/')">
+                                <div class="w-16 h-16 rounded-xl bg-gray-100 flex items-center justify-center text-xs text-gray-500">Video</div>
+                            </template>
+                            <button type="button" @click="mediaFiles.splice(i, 1)" class="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center">×</button>
+                        </div>
+                    </template>
+                </div>
+            </template>
+        </div>
+
+        <div class="flex justify-end">
             <button @click="submitPost()" :disabled="isSubmitting || !content.trim()" class="clay-btn bg-brand-peach font-bold py-2 px-6 text-sm disabled:opacity-50">
                 <span x-show="!isSubmitting">Kirim</span>
                 <span x-show="isSubmitting">Loading...</span>
@@ -101,18 +128,24 @@
                 <!-- Comments Section -->
                 <div x-show="openComments === post.id" x-cloak class="mt-4 space-y-3 border-t-2 border-gray-100 pt-4">
                     <template x-for="comment in post.comments || []" :key="comment.id">
-                        <div class="flex items-start space-x-2">
+                        <div class="flex items-start space-x-2 group">
                             <div class="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs mt-0.5 flex-shrink-0 bg-brand-lilac">
                                 <span x-text="comment.user?.name?.charAt(0).toUpperCase() || '?'"></span>
                             </div>
                             <div class="flex-1 bg-gray-50 rounded-2xl px-3 py-2">
-                                <div class="font-bold text-xs" x-text="comment.user?.name || 'Unknown'"></div>
+                                <div class="flex justify-between items-start">
+                                    <div class="font-bold text-xs" x-text="comment.user?.name || 'Unknown'"></div>
+                                    <template x-if="comment.user_id === {{ Auth::id() }}">
+                                        <button @click="deleteComment(post.id, comment.id)" class="text-gray-400 hover:text-red-500 text-xs opacity-0 group-hover:opacity-100 transition ml-2">×</button>
+                                    </template>
+                                </div>
                                 <p class="text-sm text-gray-700" x-text="comment.comment"></p>
+                                <button @click="replyToComment(post.id, comment)" class="text-xs text-gray-400 hover:text-brand-blue mt-1 font-medium">Balas</button>
                             </div>
                         </div>
                     </template>
                     <div class="flex space-x-2">
-                        <input type="text" x-model="commentTexts[post.id]" @keydown.enter.prevent="addComment(post.id)" placeholder="Tulis komentar..." class="flex-1 clay-input px-3 py-2 text-sm">
+                        <input type="text" :id="'comment-input-' + post.id" x-model="commentTexts[post.id]" @keydown.enter.prevent="addComment(post.id)" placeholder="Tulis komentar..." class="flex-1 clay-input px-3 py-2 text-sm">
                         <button @click="addComment(post.id)" class="clay-sm px-3 py-2 bg-brand-blue text-sm font-bold">Kirim</button>
                     </div>
                 </div>
@@ -151,14 +184,24 @@
             openComments: null,
             commentTexts: {},
 
-            initFeed() {
+            initFeed(initialPosts, initialMeta) {
                 window.feedInstance = this;
-                this.loadPosts();
+                if (initialPosts) {
+                    this.posts = (initialPosts || []).map(p => ({
+                        ...p,
+                        user_reaction: p.reactions?.find(r => r.user_id === {{ Auth::id() }})?.reaction_type || null
+                    }));
+                    this.hasMore = initialMeta?.current_page < initialMeta?.last_page;
+                    this.page = initialMeta?.current_page || 1;
+                    this.loading = false;
+                } else {
+                    this.loadPosts();
+                }
             },
 
             loadPosts() {
                 this.loading = true;
-                fetch('/api/v1/posts?page=' + this.page)
+                fetch('/feed?page=' + this.page)
                     .then(r => r.json())
                     .then(res => {
                         const newPosts = (res.data || []).map(p => ({
@@ -210,6 +253,15 @@
                 this.openComments = this.openComments === postId ? null : postId;
             },
 
+            replyToComment(postId, comment) {
+                this.commentTexts[postId] = '@' + (comment.user?.name || comment.user?.username || '') + ' ';
+                this.openComments = postId;
+                this.$nextTick(() => {
+                    const el = document.querySelector('#comment-input-' + postId);
+                    if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
+                });
+            },
+
             addComment(postId) {
                 const text = this.commentTexts[postId];
                 if (!text || !text.trim()) return;
@@ -232,6 +284,26 @@
                     }
                 })
                 .catch(() => alert('Gagal menambahkan komentar'));
+            },
+
+            deleteComment(postId, commentId) {
+                if (!confirm('Hapus komentar ini?')) return;
+                fetch('/posts/' + postId + '/comments/' + commentId, {
+                    method: 'DELETE',
+                    headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+                })
+                .then(r => r.json().then(res => ({ ok: r.ok, data: res })))
+                .then(({ ok, data }) => {
+                    if (ok && data.success) {
+                        const post = this.posts.find(p => p.id === postId);
+                        if (post && post.comments) {
+                            post.comments = post.comments.filter(c => c.id !== commentId);
+                        }
+                    } else {
+                        alert(data.error || 'Gagal menghapus komentar');
+                    }
+                })
+                .catch(() => alert('Gagal menghapus komentar'));
             },
 
             toggleReaction(postId, type) {

@@ -15,6 +15,8 @@ class ForumTopicResource extends JsonResource
             'user' => new UserResource($this->user),
             'title' => $this->title,
             'content' => $this->content,
+            'file_url' => $this->file_url,
+            'media_type' => $this->media_type,
             'comments_count' => $this->comments()->count(),
             'comments' => ForumCommentResource::collection($this->whenLoaded('comments')),
             'created_at' => $this->created_at->toIso8601String(),

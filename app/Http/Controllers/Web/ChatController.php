@@ -162,6 +162,16 @@ class ChatController extends Controller
         }
     }
 
+    public function destroyConversation(Request $request, $id)
+    {
+        try {
+            $this->conversationService->deleteConversation($request->user(), $id);
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
+    }
+
     public function createConversation(Request $request)
     {
         $validated = $request->validate([

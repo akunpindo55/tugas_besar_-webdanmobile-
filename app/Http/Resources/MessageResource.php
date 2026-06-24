@@ -23,6 +23,11 @@ class MessageResource extends JsonResource
                 'body' => $this->replyTo->body,
                 'message_type' => $this->replyTo->message_type,
             ] : null,
+            'reads' => $this->whenLoaded('reads', fn() => $this->reads->map(fn($r) => [
+                'id' => $r->id,
+                'user_id' => $r->user_id,
+                'read_at' => $r->read_at,
+            ])),
             'created_at' => $this->created_at->toIso8601String(),
             'updated_at' => $this->updated_at->toIso8601String(),
         ];

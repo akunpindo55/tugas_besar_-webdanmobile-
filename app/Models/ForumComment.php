@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['topic_id', 'user_id', 'parent_comment_id', 'content', 'created_at'])]
+#[Fillable(['topic_id', 'user_id', 'parent_comment_id', 'content', 'file_url', 'media_type', 'created_at'])]
 class ForumComment extends Model
 {
     public $timestamps = false;

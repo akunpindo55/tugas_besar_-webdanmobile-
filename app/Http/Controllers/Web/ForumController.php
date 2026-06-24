@@ -51,8 +51,9 @@ class ForumController extends Controller
     {
         $forum = Forum::with(['members', 'creator'])->findOrFail($id);
         $isMember = $request->user()->forums()->where('forum_id', $id)->exists();
+        $userRole = $isMember ? $request->user()->forums()->where('forum_id', $id)->first()?->pivot?->role : null;
         $topics = $forum->topics()->with(['user'])->latest()->get();
-        return view('web.forum.show', compact('forum', 'topics', 'isMember'));
+        return view('web.forum.show', compact('forum', 'topics', 'isMember', 'userRole'));
     }
 
     public function join(Request $request, $id)
@@ -104,12 +105,33 @@ class ForumController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:150',
             'content' => 'required|string',
+            'media' => 'nullable|array|max:5',
+            'media.*' => 'file|mimes:jpeg,png,jpg,gif|max:5120',
         ]);
 
         try {
-            $topic = $this->forumService->createTopic($request->user(), $id, $validated);
+            $mediaData = [];
+            if ($request->hasFile('media')) {
+                foreach ($request->file('media') as $file) {
+                    $path = $file->store('forum-topics', 'public');
+                    $mediaData[] = [
+                        'file_url' => asset('storage/' . $path),
+                        'media_type' => 'image',
+                    ];
+                }
+            }
+
+            $topic = $this->forumService->createTopic($request->user(), $id, $validated, $mediaData);
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['data' => $topic, 'redirect' => route('topics.show', $topic->id)]);
+            }
+
             return redirect()->route('topics.show', $topic->id)->with('success', 'Topik berhasil dibuat.');
         } catch (\Exception $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['error' => $e->getMessage()], 400);
+            }
             return back()->with('error', $e->getMessage())->withInput();
         }
     }
@@ -122,7 +144,15 @@ class ForumController extends Controller
 
         $isMember = $request->user()->forums()->where('forum_id', $topic->forum_id)->exists();
 
-        return view('web.forum.topic', compact('topic', 'isMember'));
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['data' => $topic->load(['user', 'comments.user', 'comments.replies.user'])]);
+        }
+
+        return view('web.forum.topic', [
+            'topic' => $topic,
+            'isMember' => $isMember,
+            'topicJson' => $topic->toArray(),
+        ]);
     }
 
     public function replyTopic(Request $request, $id)
@@ -130,13 +160,55 @@ class ForumController extends Controller
         $validated = $request->validate([
             'content' => 'required|string',
             'parent_comment_id' => 'nullable|integer|exists:forum_comments,id',
+            'media' => 'nullable|array|max:5',
+            'media.*' => 'file|mimes:jpeg,png,jpg,gif|max:5120',
         ]);
 
         try {
-            $this->forumService->replyTopic($request->user(), $id, $validated);
+            $mediaData = [];
+            if ($request->hasFile('media')) {
+                foreach ($request->file('media') as $file) {
+                    $path = $file->store('forum-comments', 'public');
+                    $mediaData[] = [
+                        'file_url' => asset('storage/' . $path),
+                        'media_type' => 'image',
+                    ];
+                }
+            }
+
+            $comment = $this->forumService->replyTopic($request->user(), $id, $validated, $mediaData);
+            $comment->load('user');
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['data' => $comment]);
+            }
+
             return back()->with('success', 'Komentar berhasil ditambahkan.');
         } catch (\Exception $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['error' => $e->getMessage()], 400);
+            }
             return back()->with('error', $e->getMessage())->withInput();
+        }
+    }
+
+    public function destroyComment(Request $request, $id, $commentId)
+    {
+        try {
+            $this->forumService->deleteTopicComment($request->user(), $commentId);
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
+    }
+
+    public function destroyTopic(Request $request, $id, $topicId)
+    {
+        try {
+            $this->forumService->deleteTopic($request->user(), $topicId);
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 400);
         }
     }
 

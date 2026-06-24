@@ -54,7 +54,7 @@ class MessageService
                 'reply_to' => $data['reply_to'] ?? null,
             ]);
 
-            $message->load(['sender', 'replyTo']);
+            $message->load(['sender', 'replyTo', 'reads']);
 
             $serializedMessage = (new \App\Http\Resources\MessageResource($message))->resolve();
 

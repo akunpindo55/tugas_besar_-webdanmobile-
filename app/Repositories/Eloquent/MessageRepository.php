@@ -19,7 +19,7 @@ class MessageRepository implements MessageRepositoryInterface
     public function findHistory(Conversation $conversation, int $limit = 20): CursorPaginator
     {
         return Message::where('conversation_id', $conversation->id)
-            ->with(['sender', 'replyTo'])
+            ->with(['sender', 'replyTo', 'reads'])
             ->latest()
             ->cursorPaginate($limit);
     }

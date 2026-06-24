@@ -115,12 +115,19 @@ class ForumRepository implements ForumRepositoryInterface
             'user_id' => $user->id,
             'title' => $data['title'],
             'content' => $data['content'],
+            'file_url' => $data['file_url'] ?? null,
+            'media_type' => $data['media_type'] ?? null,
         ]);
     }
 
     public function findTopicById(int $id): ?ForumTopic
     {
         return ForumTopic::with(['forum', 'user', 'comments.user'])->find($id);
+    }
+
+    public function deleteTopic(ForumTopic $topic): void
+    {
+        $topic->delete();
     }
 
     public function addComment(ForumTopic $topic, User $user, array $data): ForumComment
@@ -130,7 +137,19 @@ class ForumRepository implements ForumRepositoryInterface
             'user_id' => $user->id,
             'parent_comment_id' => $data['parent_comment_id'] ?? null,
             'content' => $data['content'],
+            'file_url' => $data['file_url'] ?? null,
+            'media_type' => $data['media_type'] ?? null,
             'created_at' => now(),
         ]);
+    }
+
+    public function deleteComment(ForumComment $comment): void
+    {
+        $comment->delete();
+    }
+
+    public function deleteForum(Forum $forum): void
+    {
+        $forum->delete();
     }
 }

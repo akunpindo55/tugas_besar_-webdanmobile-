@@ -16,20 +16,6 @@
         </div>
         @endif
 
-        <!-- Avatar -->
-        <div class="text-center mb-6">
-            <div class="w-20 h-20 rounded-full mx-auto mb-3 flex items-center justify-center text-2xl font-bold bg-brand-peach clay-sm">
-                {{ strtoupper(substr($user->name, 0, 1)) }}
-            </div>
-            <form method="POST" action="{{ route('profile.avatar') }}" enctype="multipart/form-data">
-                @csrf
-                <label class="clay-sm px-4 py-1.5 bg-gray-50 text-sm font-bold cursor-pointer inline-block">
-                    Ganti Foto
-                    <input type="file" name="avatar" class="hidden" accept="image/*" onchange="this.form.submit()">
-                </label>
-            </form>
-        </div>
-
         <!-- Edit Form -->
         <form method="POST" action="{{ route('profile.update') }}">
             @csrf
@@ -45,10 +31,6 @@
             <div class="mb-4">
                 <label class="block text-sm font-bold text-gray-700 mb-1">Email</label>
                 <input type="email" value="{{ $user->email }}" disabled class="w-full clay-input px-4 py-2.5 text-sm bg-gray-50 text-gray-500">
-            </div>
-            <div class="mb-6">
-                <label class="block text-sm font-bold text-gray-700 mb-1">Bio</label>
-                <textarea name="bio" rows="3" class="w-full clay-input px-4 py-2.5 text-sm resize-none">{{ old('bio', $user->bio) }}</textarea>
             </div>
             <button type="submit" class="w-full clay-btn bg-brand-peach font-bold py-2.5 text-sm">Simpan</button>
         </form>
@@ -74,9 +56,13 @@
             <button type="submit" class="w-full clay-btn bg-brand-blue font-bold py-2.5 text-sm">Ubah Kata Sandi</button>
         </form>
 
-        <div class="mt-6 text-center">
-            <a href="{{ route('profile.show', Auth::user()->username) }}" class="text-sm text-gray-500 hover:underline">← Lihat Profil</a>
-        </div>
+        <hr class="my-8 border-2 border-gray-100">
+
+        <!-- Logout -->
+        <form method="POST" action="{{ route('logout') }}">
+            @csrf
+            <button type="submit" class="w-full clay-btn bg-red-50 text-red-600 font-bold py-2.5 text-sm hover:bg-red-100 transition">Keluar</button>
+        </form>
     </div>
 </div>
 @endsection

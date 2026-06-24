@@ -94,4 +94,14 @@ class ConversationController extends ApiController
             return $this->errorResponse($e->getMessage());
         }
     }
+
+    public function destroy(Request $request, int $id): JsonResponse
+    {
+        try {
+            $this->conversationService->deleteForMe($request->user(), $id);
+            return $this->successResponse(null, 'Percakapan berhasil dihapus.');
+        } catch (\Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
 }

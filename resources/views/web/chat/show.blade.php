@@ -44,14 +44,18 @@
                     </div>
                 </div>
                 <div class="flex items-center space-x-2">
-                    @if($currentConversation->type === 'group')
-                    <button @click="showGroupInfo = !showGroupInfo" class="clay-sm px-3 py-1.5 bg-gray-50 text-xs font-bold text-gray-600">
-                        Info
-                    </button>
-                    <button @click="leaveGroup()" class="clay-sm px-3 py-1.5 bg-red-50 text-xs font-bold text-red-600">
-                        Keluar
-                    </button>
-                    @endif
+                    <div class="relative" x-data="{ open: false }">
+                        <button @click="open = !open" @click.outside="open = false" class="clay-sm w-8 h-8 bg-gray-50 text-gray-600 flex items-center justify-center text-lg font-bold leading-none">⋮</button>
+                        <div x-show="open" x-cloak @click="open = false" class="absolute right-0 top-full mt-1 clay bg-white p-2 min-w-[160px] z-50 shadow-lg">
+                            @if($currentConversation->type === 'group')
+                            <button @click="showGroupInfo = !showGroupInfo" class="w-full text-left px-3 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50 rounded-xl transition">Info</button>
+                            <button @click="leaveGroup()" class="w-full text-left px-3 py-2 text-sm font-bold text-red-600 hover:bg-red-50 rounded-xl transition">Keluar</button>
+                            @endif
+                            @if($currentConversation->created_by === Auth::id() || $currentConversation->type === 'direct')
+                            <button @click="deleteConversation()" class="w-full text-left px-3 py-2 text-sm font-bold text-red-600 hover:bg-red-50 rounded-xl transition">Hapus</button>
+                            @endif
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -90,10 +94,10 @@
                                     <div :class="msg.sender_id === {{ Auth::id() }} ? 'clay-bubble-self bg-brand-peach bg-opacity-30' : 'clay-bubble-other bg-gray-50'"
                                          class="px-4 py-2.5">
                                         <!-- Reply Reference -->
-                                        <template x-if="msg.reply_to_message">
+                                        <template x-if="msg.replyTo">
                                             <div class="text-xs mb-1.5 px-2 py-1 rounded-lg bg-black/5 border-l-2 border-gray-400">
                                                 <span class="font-bold text-gray-500">Membalas:</span>
-                                                <p class="truncate text-gray-500" x-text="msg.reply_to_message.body || 'File'"></p>
+                                                <p class="truncate text-gray-500" x-text="msg.replyTo.body || 'File'"></p>
                                             </div>
                                         </template>
                                         <p class="text-sm text-gray-800 whitespace-pre-wrap break-words" x-text="msg.body"></p>
@@ -114,9 +118,16 @@
                                         <div class="flex items-center justify-end space-x-1 mt-1">
                                             <span class="text-[10px] text-gray-400" x-text="formatTime(msg.created_at)"></span>
                                             <template x-if="msg.sender_id === {{ Auth::id() }}">
-                                                <svg class="w-3 h-3" :class="msg.reads?.length > 0 ? 'text-brand-blue' : 'text-gray-400'" fill="currentColor" viewBox="0 0 20 20">
-                                                    <path d="M9 2l-6 6 2 2 4-4 8 8 2-2z"/>
-                                                </svg>
+                                                <div class="flex items-center space-x-0.5">
+                                                    <svg class="w-3 h-3 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path d="M6 12l4 4 8-8"/>
+                                                    </svg>
+                                                    <template x-if="msg.reads?.filter(r => r.user_id !== userId).length > 0">
+                                                        <svg class="w-3 h-3 text-brand-blue" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path d="M6 12l4 4 8-8"/>
+                                                        </svg>
+                                                    </template>
+                                                </div>
                                             </template>
                                         </div>
                                     </div>
@@ -414,6 +425,20 @@
                     if (res.success) window.location.href = '/chat';
                 })
                 .catch(() => alert('Gagal keluar grup'));
+            },
+
+            deleteConversation() {
+                if (!confirm('Hapus seluruh percakapan ini untuk semua orang?')) return;
+                fetch('/chat/' + this.conversationId, {
+                    method: 'DELETE',
+                    headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+                })
+                .then(r => r.json())
+                .then(res => {
+                    if (res.success) window.location.href = '/chat';
+                    else alert(res.error || 'Gagal menghapus percakapan');
+                })
+                .catch(() => alert('Gagal menghapus percakapan'));
             },
 
             searchInviteUsers() {

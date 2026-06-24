@@ -16,6 +16,7 @@ class StoreForumCommentRequest extends FormRequest
         return [
             'content' => 'required|string|max:5000',
             'parent_comment_id' => 'nullable|integer|exists:forum_comments,id',
+            'file' => 'nullable|file|max:10240',
         ];
     }
 }

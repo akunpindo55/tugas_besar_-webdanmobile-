@@ -32,4 +32,6 @@ interface ConversationRepositoryInterface
     public function findInvitation(int $invitationId): ?GroupInvitation;
 
     public function updateInvitationStatus(GroupInvitation $invitation, string $status): void;
+
+    public function delete(Conversation $conversation): void;
 }

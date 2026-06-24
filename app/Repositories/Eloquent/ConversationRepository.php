@@ -131,4 +131,9 @@ class ConversationRepository implements ConversationRepositoryInterface
             'responded_at' => now(),
         ]);
     }
+
+    public function delete(Conversation $conversation): void
+    {
+        $conversation->delete();
+    }
 }

@@ -8,6 +8,7 @@ use App\Http\Requests\ToggleReactionRequest;
 use App\Http\Resources\PostCommentResource;
 use App\Http\Resources\PostResource;
 use App\Models\Post;
+use App\Models\PostComment;
 use App\Services\PostService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -27,6 +28,16 @@ class PostController extends ApiController
         return $this->paginatedResponse(
             PostResource::collection($paginator),
             'Daftar postingan berhasil dimuat.'
+        );
+    }
+
+    public function show(Request $request, int $id): JsonResponse
+    {
+        $post = \App\Models\Post::with(['user', 'media', 'comments.user', 'reactions'])->findOrFail($id);
+
+        return $this->successResponse(
+            new PostResource($post),
+            'Detail postingan berhasil dimuat.'
         );
     }
 
@@ -92,6 +103,20 @@ class PostController extends ApiController
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage());
         }
+    }
+
+    public function destroyComment(Request $request, int $postId, int $commentId): JsonResponse
+    {
+        $post = Post::findOrFail($postId);
+        $comment = PostComment::where('post_id', $post->id)->findOrFail($commentId);
+
+        if ($comment->user_id !== $request->user()->id) {
+            return $this->errorResponse('Unauthorized', 403);
+        }
+
+        $comment->delete();
+
+        return $this->successResponse(null, 'Komentar berhasil dihapus.');
     }
 
     public function react(ToggleReactionRequest $request, int $id): JsonResponse

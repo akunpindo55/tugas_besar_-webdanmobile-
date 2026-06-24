@@ -14,9 +14,32 @@ class HomeController extends Controller
 
     public function index(Request $request)
     {
-        // Load initial feed to pass to blade
-        $posts = $this->postService->getFeed($request->user());
-        
-        return view('web.home', compact('posts'));
+        $paginator = $this->postService->getFeed($request->user());
+        $posts = $paginator->items();
+        $paginator->appends(['page' => $paginator->currentPage()]);
+
+        return view('web.home', [
+            'posts' => $posts,
+            'postsJson' => $posts,
+            'meta' => [
+                'current_page' => $paginator->currentPage(),
+                'last_page' => $paginator->lastPage(),
+                'total' => $paginator->total(),
+            ],
+        ]);
+    }
+
+    public function feed(Request $request)
+    {
+        $paginator = $this->postService->getFeed($request->user());
+
+        return response()->json([
+            'data' => $paginator->items(),
+            'meta' => [
+                'current_page' => $paginator->currentPage(),
+                'last_page' => $paginator->lastPage(),
+                'total' => $paginator->total(),
+            ],
+        ]);
     }
 }

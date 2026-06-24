@@ -16,6 +16,7 @@ use App\Models\ForumTopic;
 use App\Services\ForumService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ForumController extends ApiController
 {
@@ -124,10 +125,21 @@ class ForumController extends ApiController
     public function createTopic(StoreTopicRequest $request, int $id): JsonResponse
     {
         try {
+            $mediaData = [];
+            if ($request->hasFile('file')) {
+                $file = $request->file('file');
+                $path = $file->store('forum/topics', 'public');
+                $mediaData[] = [
+                    'file_url' => asset('storage/' . $path),
+                    'media_type' => $file->getMimeType(),
+                ];
+            }
+
             $topic = $this->forumService->createTopic(
                 $request->user(),
                 $id,
-                $request->validated()
+                $request->validated(),
+                $mediaData
             );
 
             return $this->successResponse(
@@ -154,10 +166,21 @@ class ForumController extends ApiController
     public function replyTopic(StoreForumCommentRequest $request, int $topicId): JsonResponse
     {
         try {
+            $mediaData = [];
+            if ($request->hasFile('file')) {
+                $file = $request->file('file');
+                $path = $file->store('forum/comments', 'public');
+                $mediaData[] = [
+                    'file_url' => asset('storage/' . $path),
+                    'media_type' => $file->getMimeType(),
+                ];
+            }
+
             $comment = $this->forumService->replyTopic(
                 $request->user(),
                 $topicId,
-                $request->validated()
+                $request->validated(),
+                $mediaData
             );
 
             return $this->successResponse(
@@ -180,5 +203,35 @@ class ForumController extends ApiController
             new ForumTopicResource($topic),
             'Topik diskusi berhasil dimuat.'
         );
+    }
+
+    public function destroyTopic(Request $request, int $topicId): JsonResponse
+    {
+        try {
+            $this->forumService->deleteTopic($request->user(), $topicId);
+            return $this->successResponse(null, 'Topik berhasil dihapus.');
+        } catch (\Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+    public function destroyTopicComment(Request $request, int $commentId): JsonResponse
+    {
+        try {
+            $this->forumService->deleteTopicComment($request->user(), $commentId);
+            return $this->successResponse(null, 'Komentar berhasil dihapus.');
+        } catch (\Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+    public function destroy(Request $request, int $id): JsonResponse
+    {
+        try {
+            $this->forumService->deleteForum($request->user(), $id);
+            return $this->successResponse(null, 'Forum berhasil dihapus.');
+        } catch (\Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
     }
 }

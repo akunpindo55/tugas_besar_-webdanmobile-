@@ -36,7 +36,7 @@
     <!-- Daftar Percakapan -->
     <div class="space-y-3" x-ref="conversationList">
         <template x-for="conv in conversations" :key="conv.id">
-            <a :href="'/chat/' + conv.id" class="block clay bg-white p-4 hover:shadow-lg transition-all duration-200 animate-fade-slide-up">
+            <a :href="'/chat/' + conv.id" class="block clay bg-white p-4 hover:shadow-lg transition-all duration-200 animate-fade-slide-up group">
                 <div class="flex items-center space-x-4">
                     <div class="relative flex-shrink-0">
                         <div class="w-14 h-14 rounded-full flex items-center justify-center font-bold text-lg text-gray-700" :class="conv.type === 'group' ? 'bg-brand-lilac' : 'bg-brand-blue'">
@@ -51,7 +51,10 @@
                     <div class="flex-1 min-w-0">
                         <div class="flex justify-between items-start">
                             <h3 class="font-bold text-gray-900 truncate" x-text="conv.name || 'Percakapan'"></h3>
-                            <span class="text-xs text-gray-400 flex-shrink-0 ml-2" x-text="formatTime(conv.last_message?.created_at || conv.created_at)"></span>
+                            <div class="flex items-center space-x-1 flex-shrink-0">
+                                <button @click.prevent="deleteConv(conv.id, conv.name)" class="text-gray-300 hover:text-red-500 text-sm opacity-0 group-hover:opacity-100 transition ml-2" title="Hapus percakapan">×</button>
+                                <span class="text-xs text-gray-400 ml-1" x-text="formatTime(conv.last_message?.created_at || conv.created_at)"></span>
+                            </div>
                         </div>
                         <p class="text-sm text-gray-500 truncate mt-0.5" x-text="conv.last_message?.body || (conv.type === 'group' ? 'Grup' : 'Mulai percakapan')"></p>
                     </div>
@@ -159,6 +162,23 @@
                     }
                 })
                 .catch(err => alert('Gagal merespon undangan'));
+            },
+
+            deleteConv(id, name) {
+                if (!confirm('Hapus percakapan "' + (name || '') + '" untuk semua orang?')) return;
+                fetch('/chat/' + id, {
+                    method: 'DELETE',
+                    headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+                })
+                .then(r => r.json())
+                .then(res => {
+                    if (res.success) {
+                        this.conversations = this.conversations.filter(c => c.id !== id);
+                    } else {
+                        alert(res.error || 'Gagal menghapus percakapan');
+                    }
+                })
+                .catch(() => alert('Gagal menghapus percakapan'));
             },
 
             formatTime(dateStr) {

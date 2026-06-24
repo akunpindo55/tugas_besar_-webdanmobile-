@@ -183,7 +183,7 @@ class ForumService
         $this->forumRepository->removeMember($forum, $member);
     }
 
-    public function createTopic(User $user, int $forumId, array $data): ForumTopic
+    public function createTopic(User $user, int $forumId, array $data, array $mediaData = []): ForumTopic
     {
         $forum = $this->forumRepository->findById($forumId);
         if (!$forum) {
@@ -194,10 +194,33 @@ class ForumService
             throw new \Exception('Hanya anggota yang dapat membuat topik di forum ini.');
         }
 
-        return $this->forumRepository->createTopic($forum, $user, $data);
+        $topicData = $data;
+        if (!empty($mediaData)) {
+            $topicData['file_url'] = $mediaData[0]['file_url'];
+            $topicData['media_type'] = $mediaData[0]['media_type'];
+        }
+
+        return $this->forumRepository->createTopic($forum, $user, $topicData);
     }
 
-    public function replyTopic(User $user, int $topicId, array $data): ForumComment
+    public function deleteTopic(User $user, int $topicId): void
+    {
+        $topic = $this->forumRepository->findTopicById($topicId);
+        if (!$topic) {
+            throw new \Exception('Topik tidak ditemukan.');
+        }
+
+        $forum = $topic->forum;
+        $role = $this->forumRepository->getMemberRole($forum, $user);
+
+        if ($topic->user_id !== $user->id && $role !== 'owner' && $role !== 'admin') {
+            throw new \Exception('Anda tidak memiliki izin untuk menghapus topik ini.');
+        }
+
+        $this->forumRepository->deleteTopic($topic);
+    }
+
+    public function replyTopic(User $user, int $topicId, array $data, array $mediaData = []): ForumComment
     {
         $topic = $this->forumRepository->findTopicById($topicId);
         if (!$topic) {
@@ -209,8 +232,13 @@ class ForumService
             throw new \Exception('Hanya anggota forum yang dapat memberikan komentar.');
         }
 
-        return DB::transaction(function () use ($topic, $user, $data) {
-            $comment = $this->forumRepository->addComment($topic, $user, $data);
+        return DB::transaction(function () use ($topic, $user, $data, $mediaData) {
+            $commentData = $data;
+            if (!empty($mediaData)) {
+                $commentData['file_url'] = $mediaData[0]['file_url'];
+                $commentData['media_type'] = $mediaData[0]['media_type'];
+            }
+            $comment = $this->forumRepository->addComment($topic, $user, $commentData);
 
             // Notify owner of topic or owner of parent comment
             $targetUserId = null;
@@ -252,5 +280,31 @@ class ForumService
 
             return $comment;
         });
+    }
+
+    public function deleteTopicComment(User $user, int $commentId): void
+    {
+        $comment = ForumComment::findOrFail($commentId);
+
+        if ($comment->user_id !== $user->id) {
+            throw new \Exception('Anda hanya dapat menghapus komentar Anda sendiri.');
+        }
+
+        $this->forumRepository->deleteComment($comment);
+    }
+
+    public function deleteForum(User $user, int $forumId): void
+    {
+        $forum = $this->forumRepository->findById($forumId);
+        if (!$forum) {
+            throw new \Exception('Forum tidak ditemukan.');
+        }
+
+        $role = $this->forumRepository->getMemberRole($forum, $user);
+        if ($role !== 'owner') {
+            throw new \Exception('Hanya pemilik forum yang dapat menghapus forum.');
+        }
+
+        $this->forumRepository->deleteForum($forum);
     }
 }

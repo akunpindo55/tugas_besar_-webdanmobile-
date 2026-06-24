@@ -39,4 +39,10 @@ class NotificationController extends ApiController
         $this->notificationService->markAllRead($request->user());
         return $this->successResponse(null, 'Semua notifikasi berhasil ditandai dibaca.');
     }
+
+    public function unreadCount(Request $request): JsonResponse
+    {
+        $count = $this->notificationService->getUnreadCount($request->user());
+        return $this->successResponse(['count' => $count]);
+    }
 }

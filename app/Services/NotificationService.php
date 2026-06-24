@@ -22,4 +22,9 @@ class NotificationService
     {
         $user->unreadNotifications->markAsRead();
     }
+
+    public function getUnreadCount(User $user): int
+    {
+        return $user->unreadNotifications()->count();
+    }
 }

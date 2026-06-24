@@ -164,4 +164,41 @@ class ConversationService
             ]);
         });
     }
+
+    public function deleteConversation(User $user, int $conversationId): void
+    {
+        $conversation = $this->conversationRepository->findById($conversationId);
+        if (!$conversation) {
+            throw new \Exception('Percakapan tidak ditemukan.');
+        }
+
+        if (!$this->conversationRepository->isMember($conversation, $user)) {
+            throw new \Exception('Anda bukan anggota percakapan ini.');
+        }
+
+        // For direct chats, any member can delete. For groups, only the creator can delete.
+        if ($conversation->type === 'group' && $conversation->created_by !== $user->id) {
+            throw new \Exception('Hanya pembuat grup yang dapat menghapus percakapan ini.');
+        }
+
+        DB::transaction(function () use ($conversation) {
+            $this->conversationRepository->delete($conversation);
+        });
+    }
+
+    public function deleteForMe(User $user, int $conversationId): void
+    {
+        $conversation = $this->conversationRepository->findById($conversationId);
+        if (!$conversation) {
+            throw new \Exception('Percakapan tidak ditemukan.');
+        }
+
+        if (!$this->conversationRepository->isMember($conversation, $user)) {
+            throw new \Exception('Anda bukan anggota percakapan ini.');
+        }
+
+        DB::transaction(function () use ($conversation, $user) {
+            $this->conversationRepository->removeMember($conversation, $user);
+        });
+    }
 }

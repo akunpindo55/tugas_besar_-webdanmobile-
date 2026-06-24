@@ -75,20 +75,27 @@
 <body class="bg-[#F5F0EB] text-gray-800 font-sans antialiased overflow-x-hidden">
 
     <!-- Navbar -->
-    <nav class="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b-2 border-gray-100 clay-sm rounded-none">
+    <nav class="sticky top-0 z-50" style="background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%); box-shadow: 0 8px 32px rgba(0,0,0,0.04), 0 2px 8px rgba(0,0,0,0.02);">
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16 items-center">
+            <div class="flex justify-between h-14 items-center">
                 <div class="flex items-center space-x-2">
-                    <span class="text-2xl">🎓</span>
-                    <span class="text-xl font-bold text-gray-900 tracking-tight">Campus Connect</span>
+                    <a href="{{ route('landing') }}" class="clay-sm w-9 h-9 flex items-center justify-center bg-gradient-to-br from-brand-mint to-brand-blue hover:shadow-lg transition-all duration-200">
+                        <svg class="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                    </a>
                 </div>
-                <div class="flex items-center space-x-3">
+                <div class="flex items-center">
                     @if (Route::has('login'))
                         @auth
-                            <a href="{{ route('home') }}" class="clay-btn bg-brand-mint font-bold py-2 px-5 text-sm">Dashboard</a>
+                            <a href="{{ route('home') }}" class="clay-sm w-9 h-9 flex items-center justify-center" style="background: linear-gradient(135deg, #BDE0FE, #DCD3FF);">
+                                <svg class="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                            </a>
                         @else
-                            <a href="{{ route('login') }}" class="text-sm font-medium text-gray-600 hover:text-gray-900 px-4 py-2 transition">Masuk</a>
-                            <a href="{{ route('register') }}" class="clay-btn bg-brand-peach font-bold py-2 px-5 text-sm">Daftar</a>
+                            <a href="{{ route('login') }}" class="clay-sm w-9 h-9 flex items-center justify-center bg-white hover:bg-brand-peach hover:bg-opacity-30 transition-all duration-200">
+                                <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
+                            </a>
+                            <a href="{{ route('register') }}" class="clay-sm w-9 h-9 flex items-center justify-center" style="background: linear-gradient(135deg, #BDE0FE, #DCD3FF);">
+                                <svg class="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+                            </a>
                         @endauth
                     @endif
                 </div>
@@ -140,7 +147,7 @@
             <div class="clay-card p-8 bg-white card-gsap">
                 <div class="w-14 h-14 rounded-2xl bg-brand-mint bg-opacity-40 flex items-center justify-center text-2xl mb-5 clay-sm">📝</div>
                 <h3 class="text-xl font-bold mb-3">Feed Kampus</h3>
-                <p class="text-gray-500 leading-relaxed">Bagikan momen, berita, dan pengalaman kampusmu. Berinteraksi dengan sesama mahasiswa melalui postingan publik atau internal.</p>
+                <p class="text-gray-500 leading-relaxed">Bagikan momen, berita, dan pengalaman kampusmu. Berinteraksi dengan sesama mahasiswa melalui postingan publik.</p>
             </div>
 
             <!-- Card 2: Chat -->
@@ -161,17 +168,10 @@
             <div class="clay-card p-8 bg-white card-gsap">
                 <div class="w-14 h-14 rounded-2xl bg-brand-blue bg-opacity-40 flex items-center justify-center text-2xl mb-5 clay-sm">👤</div>
                 <h3 class="text-xl font-bold mb-3">Profil Kustom</h3>
-                <p class="text-gray-500 leading-relaxed">Tampilkan identitas kampusmu dengan profil yang bisa disesuaikan. Tambahkan foto, jurusan, dan minatmu.</p>
+                <p class="text-gray-500 leading-relaxed">Tampilkan identitas kampusmu dengan profil yang bisa disesuaikan.</p>
             </div>
 
-            <!-- Card 5: Privacy -->
-            <div class="clay-card p-8 bg-white card-gsap">
-                <div class="w-14 h-14 rounded-2xl bg-brand-mint bg-opacity-40 flex items-center justify-center text-2xl mb-5 clay-sm">🔒</div>
-                <h3 class="text-xl font-bold mb-3">Kontrol Privasi</h3>
-                <p class="text-gray-500 leading-relaxed">Atur visibilitas postinganmu. Pilih antara publik untuk semua mahasiswa atau internal untuk lingkaran pertemanan.</p>
-            </div>
-
-            <!-- Card 6: Community -->
+            <!-- Card 5: Community -->
             <div class="clay-card p-8 bg-white card-gsap">
                 <div class="w-14 h-14 rounded-2xl bg-brand-peach bg-opacity-40 flex items-center justify-center text-2xl mb-5 clay-sm">🤝</div>
                 <h3 class="text-xl font-bold mb-3">Komunitas Kampus</h3>
@@ -202,7 +202,7 @@
                 <span class="text-xl">🎓</span>
                 <span class="font-bold text-gray-600">Campus Connect</span>
             </div>
-            <p>&copy; {{ date('Y') }} Campus Connect. Platform sosial mahasiswa.</p>
+            <p>&copy; 2026 STMIK WIDYA UTAMA. Platform sosial mahasiswa.</p>
         </div>
     </footer>
 

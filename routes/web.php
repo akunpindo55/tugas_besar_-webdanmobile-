@@ -24,6 +24,7 @@ Route::get('/', function () {
 // Authenticated Web Routes
 Route::middleware('auth')->group(function () {
     Route::get('/home', [HomeController::class, 'index'])->name('home');
+    Route::get('/feed', [HomeController::class, 'feed'])->name('feed');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
     // Chat JSON Endpoints (must be before /chat/{id})
@@ -32,6 +33,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/chat/messages/{id}/read', [ChatController::class, 'readMessage']);
     Route::delete('/chat/messages/{id}', [ChatController::class, 'destroy']);
     Route::post('/invitations/{id}/respond', [ChatController::class, 'respondInvitation']);
+    Route::delete('/chat/{id}', [ChatController::class, 'destroyConversation']);
 
     // Chat Pages (with {id} parameter)
     Route::get('/chat', [ChatController::class, 'index'])->name('chat.index');
@@ -49,16 +51,14 @@ Route::middleware('auth')->group(function () {
     Route::put('/posts/{post}', [PostController::class, 'update']);
     Route::delete('/posts/{post}', [PostController::class, 'destroy']);
     Route::post('/posts/{post}/comments', [PostController::class, 'comment']);
+    Route::delete('/posts/{post}/comments/{comment}', [PostController::class, 'destroyComment']);
     Route::post('/posts/{post}/reactions', [PostController::class, 'react']);
 
     // Profile Pages
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::post('/profile/avatar', [ProfileController::class, 'avatar'])->name('profile.avatar');
     Route::post('/profile/change-password', [ProfileController::class, 'changePassword'])->name('profile.change-password');
-    Route::get('/profile/{username}', [ProfileController::class, 'show'])->name('profile.show');
-    Route::post('/profile/{user}/block', [ProfileController::class, 'block'])->name('profile.block');
-    Route::post('/profile/{user}/unblock', [ProfileController::class, 'unblock'])->name('profile.unblock');
+
 
     // Forum Pages
     Route::get('/forums', [ForumController::class, 'index'])->name('forums.index');
@@ -71,7 +71,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/forums/{id}/invite', [ForumController::class, 'invite']);
     Route::post('/forums/{id}/kick/{memberId}', [ForumController::class, 'kick']);
     Route::post('/forums/{id}/topics', [ForumController::class, 'createTopic'])->name('forums.topics');
+    Route::delete('/forums/{id}/topics/{topicId}', [ForumController::class, 'destroyTopic']);
     Route::get('/topics/{id}', [ForumController::class, 'showTopic'])->name('topics.show');
     Route::post('/topics/{id}/comments', [ForumController::class, 'replyTopic'])->name('topics.comments');
+    Route::delete('/topics/{id}/comments/{commentId}', [ForumController::class, 'destroyComment']);
     Route::post('/forum-invitations/{id}/respond', [ForumController::class, 'respondInvitation']);
+
+    // Notifications
+    Route::get('/notifications', [App\Http\Controllers\Web\NotificationController::class, 'index'])->name('notifications.index');
 });
