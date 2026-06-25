@@ -27,4 +27,15 @@ class NotificationService
     {
         return $user->unreadNotifications()->count();
     }
+
+    public function delete(User $user, string $notificationId): void
+    {
+        $notification = $user->notifications()->findOrFail($notificationId);
+        $notification->delete();
+    }
+
+    public function deleteAll(User $user): void
+    {
+        $user->notifications()->delete();
+    }
 }

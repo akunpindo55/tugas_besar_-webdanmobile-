@@ -91,6 +91,8 @@ Route::prefix('v1')->group(function () {
         Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
         Route::put('/notifications/{id}/read', [NotificationController::class, 'read']);
         Route::put('/notifications/read-all', [NotificationController::class, 'readAll']);
+        Route::delete('/notifications/{id}', [NotificationController::class, 'destroy']);
+        Route::delete('/notifications', [NotificationController::class, 'destroyAll']);
 
         // Device Tokens (Push Notifications)
         Route::post('/device-tokens', [DeviceTokenController::class, 'store']);

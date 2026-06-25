@@ -45,4 +45,20 @@ class NotificationController extends ApiController
         $count = $this->notificationService->getUnreadCount($request->user());
         return $this->successResponse(['count' => $count]);
     }
+
+    public function destroy(Request $request, string $id): JsonResponse
+    {
+        try {
+            $this->notificationService->delete($request->user(), $id);
+            return $this->successResponse(null, 'Notifikasi berhasil dihapus.');
+        } catch (\Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+    public function destroyAll(Request $request): JsonResponse
+    {
+        $this->notificationService->deleteAll($request->user());
+        return $this->successResponse(null, 'Semua notifikasi berhasil dihapus.');
+    }
 }
