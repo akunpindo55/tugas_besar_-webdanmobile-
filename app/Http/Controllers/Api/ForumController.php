@@ -232,7 +232,7 @@ class ForumController extends ApiController
         try {
             $this->forumService->deleteForum($request->user(), $id);
             return $this->successResponse(null, 'Forum berhasil dihapus.');
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return $this->errorResponse($e->getMessage());
         }
     }
