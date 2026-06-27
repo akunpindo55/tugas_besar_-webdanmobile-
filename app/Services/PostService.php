@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Helpers\StorageHelper;
 use App\Models\Post;
 use App\Models\PostComment;
 use App\Models\PostReaction;
@@ -9,7 +10,6 @@ use App\Models\User;
 use App\Repositories\Contracts\PostRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class PostService
@@ -33,18 +33,13 @@ class PostService
             ]);
 
             foreach ($mediaFiles as $file) {
-                try {
-                    $path = $file->store('posts', 'supabase');
-                    if (!$path) continue;
-                    $url = Storage::disk('supabase')->url($path);
+                $url = StorageHelper::storeFile($file, 'posts');
+                if (!$url) continue;
 
-                    $mime = $file->getMimeType();
-                    $type = str_contains($mime, 'video') ? 'video' : 'image';
+                $mime = $file->getMimeType();
+                $type = str_contains($mime, 'video') ? 'video' : 'image';
 
-                    $this->postRepository->addMedia($post, $url, $type);
-                } catch (\Exception $e) {
-                    continue;
-                }
+                $this->postRepository->addMedia($post, $url, $type);
             }
 
             return $post;

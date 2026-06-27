@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Helpers\StorageHelper;
 use App\Http\Requests\InviteMemberRequest;
 use App\Http\Requests\RespondInvitationRequest;
 use App\Http\Requests\StoreForumCommentRequest;
@@ -14,9 +15,7 @@ use App\Http\Resources\ForumTopicResource;
 use App\Models\Forum;
 use App\Models\ForumTopic;
 use App\Services\ForumService;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class ForumController extends ApiController
 {
@@ -127,16 +126,13 @@ class ForumController extends ApiController
         try {
             $mediaData = [];
             if ($request->hasFile('file')) {
-                try {
-                    $file = $request->file('file');
-                    $path = $file->store('forum/topics', 'supabase');
-                    if ($path) {
-                        $mediaData[] = [
-                            'file_url' => Storage::disk('supabase')->url($path),
-                            'media_type' => $file->getMimeType(),
-                        ];
-                    }
-                } catch (\Exception $e) {}
+                $url = StorageHelper::storeFile($request->file('file'), 'forum/topics');
+                if ($url) {
+                    $mediaData[] = [
+                        'file_url' => $url,
+                        'media_type' => $request->file('file')->getMimeType(),
+                    ];
+                }
             }
 
             $topic = $this->forumService->createTopic(
@@ -172,16 +168,13 @@ class ForumController extends ApiController
         try {
             $mediaData = [];
             if ($request->hasFile('file')) {
-                try {
-                    $file = $request->file('file');
-                    $path = $file->store('forum/comments', 'supabase');
-                    if ($path) {
-                        $mediaData[] = [
-                            'file_url' => Storage::disk('supabase')->url($path),
-                            'media_type' => $file->getMimeType(),
-                        ];
-                    }
-                } catch (\Exception $e) {}
+                $url = StorageHelper::storeFile($request->file('file'), 'forum/comments');
+                if ($url) {
+                    $mediaData[] = [
+                        'file_url' => $url,
+                        'media_type' => $request->file('file')->getMimeType(),
+                    ];
+                }
             }
 
             $comment = $this->forumService->replyTopic(

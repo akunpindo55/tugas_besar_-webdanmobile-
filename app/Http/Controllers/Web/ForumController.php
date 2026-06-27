@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Helpers\StorageHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Forum;
 use App\Models\ForumTopic;
 use App\Services\ForumService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class ForumController extends Controller
 {
@@ -114,16 +114,12 @@ class ForumController extends Controller
             $mediaData = [];
             if ($request->hasFile('media')) {
                 foreach ($request->file('media') as $file) {
-                    try {
-                        $path = $file->store('forum-topics', 'supabase');
-                        if ($path) {
-                            $mediaData[] = [
-                                'file_url' => Storage::disk('supabase')->url($path),
-                                'media_type' => 'image',
-                            ];
-                        }
-                    } catch (\Exception $e) {
-                        continue;
+                    $url = StorageHelper::storeFile($file, 'forum-topics');
+                    if ($url) {
+                        $mediaData[] = [
+                            'file_url' => $url,
+                            'media_type' => 'image',
+                        ];
                     }
                 }
             }
@@ -175,16 +171,12 @@ class ForumController extends Controller
             $mediaData = [];
             if ($request->hasFile('media')) {
                 foreach ($request->file('media') as $file) {
-                    try {
-                        $path = $file->store('forum-comments', 'supabase');
-                        if ($path) {
-                            $mediaData[] = [
-                                'file_url' => Storage::disk('supabase')->url($path),
-                                'media_type' => 'image',
-                            ];
-                        }
-                    } catch (\Exception $e) {
-                        continue;
+                    $url = StorageHelper::storeFile($file, 'forum-comments');
+                    if ($url) {
+                        $mediaData[] = [
+                            'file_url' => $url,
+                            'media_type' => 'image',
+                        ];
                     }
                 }
             }

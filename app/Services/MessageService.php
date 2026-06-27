@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Helpers\StorageHelper;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
@@ -10,7 +11,6 @@ use App\Repositories\Contracts\MessageRepositoryInterface;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 
 class MessageService
 {
@@ -42,14 +42,7 @@ class MessageService
         return DB::transaction(function () use ($conversation, $conversationId, $sender, $data, $file) {
             $fileUrl = null;
             if ($file) {
-                try {
-                    $path = $file->store('messages', 'supabase');
-                    if ($path) {
-                        $fileUrl = Storage::disk('supabase')->url($path);
-                    }
-                } catch (\Exception $e) {
-                    $fileUrl = null;
-                }
+                $fileUrl = StorageHelper::storeFile($file, 'messages');
             }
 
             $message = $this->messageRepository->create([

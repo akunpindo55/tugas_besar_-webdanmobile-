@@ -2,10 +2,10 @@
 
 namespace App\Services;
 
+use App\Helpers\StorageHelper;
 use App\Models\User;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 class UserService
@@ -26,14 +26,8 @@ class UserService
 
     public function updateAvatar(User $user, $file): User
     {
-        try {
-            $path = $file->store('avatars', 'supabase');
-            if (!$path) return $this->userRepository->update($user, []);
-            $url = Storage::disk('supabase')->url($path);
-            return $this->userRepository->update($user, ['avatar' => $url]);
-        } catch (\Exception $e) {
-            return $this->userRepository->update($user, []);
-        }
+        $url = StorageHelper::storeFile($file, 'avatars');
+        return $this->userRepository->update($user, $url ? ['avatar' => $url] : []);
     }
 
     public function block(User $user, int $targetId): void
