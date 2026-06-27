@@ -16,6 +16,7 @@ use App\Models\Forum;
 use App\Models\ForumTopic;
 use App\Services\ForumService;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 
 class ForumController extends ApiController
 {
