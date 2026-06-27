@@ -33,14 +33,18 @@ class PostService
             ]);
 
             foreach ($mediaFiles as $file) {
-                $path = $file->store('posts', 'supabase');
-                $url = Storage::disk('supabase')->url($path);
-                
-                // Simple mime type detection to separate image/video
-                $mime = $file->getMimeType();
-                $type = str_contains($mime, 'video') ? 'video' : 'image';
+                try {
+                    $path = $file->store('posts', 'supabase');
+                    if (!$path) continue;
+                    $url = Storage::disk('supabase')->url($path);
 
-                $this->postRepository->addMedia($post, $url, $type);
+                    $mime = $file->getMimeType();
+                    $type = str_contains($mime, 'video') ? 'video' : 'image';
+
+                    $this->postRepository->addMedia($post, $url, $type);
+                } catch (\Exception $e) {
+                    continue;
+                }
             }
 
             return $post;

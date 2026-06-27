@@ -127,12 +127,16 @@ class ForumController extends ApiController
         try {
             $mediaData = [];
             if ($request->hasFile('file')) {
-                $file = $request->file('file');
-                $path = $file->store('forum/topics', 'supabase');
-                $mediaData[] = [
-                    'file_url' => Storage::disk('supabase')->url($path),
-                    'media_type' => $file->getMimeType(),
-                ];
+                try {
+                    $file = $request->file('file');
+                    $path = $file->store('forum/topics', 'supabase');
+                    if ($path) {
+                        $mediaData[] = [
+                            'file_url' => Storage::disk('supabase')->url($path),
+                            'media_type' => $file->getMimeType(),
+                        ];
+                    }
+                } catch (\Exception $e) {}
             }
 
             $topic = $this->forumService->createTopic(
@@ -168,12 +172,16 @@ class ForumController extends ApiController
         try {
             $mediaData = [];
             if ($request->hasFile('file')) {
-                $file = $request->file('file');
-                $path = $file->store('forum/comments', 'supabase');
-                $mediaData[] = [
-                    'file_url' => Storage::disk('supabase')->url($path),
-                    'media_type' => $file->getMimeType(),
-                ];
+                try {
+                    $file = $request->file('file');
+                    $path = $file->store('forum/comments', 'supabase');
+                    if ($path) {
+                        $mediaData[] = [
+                            'file_url' => Storage::disk('supabase')->url($path),
+                            'media_type' => $file->getMimeType(),
+                        ];
+                    }
+                } catch (\Exception $e) {}
             }
 
             $comment = $this->forumService->replyTopic(

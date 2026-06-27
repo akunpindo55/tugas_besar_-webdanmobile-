@@ -26,10 +26,14 @@ class UserService
 
     public function updateAvatar(User $user, $file): User
     {
-        $path = $file->store('avatars', 'supabase');
-        $url = Storage::disk('supabase')->url($path);
-
-        return $this->userRepository->update($user, ['avatar' => $url]);
+        try {
+            $path = $file->store('avatars', 'supabase');
+            if (!$path) return $this->userRepository->update($user, []);
+            $url = Storage::disk('supabase')->url($path);
+            return $this->userRepository->update($user, ['avatar' => $url]);
+        } catch (\Exception $e) {
+            return $this->userRepository->update($user, []);
+        }
     }
 
     public function block(User $user, int $targetId): void

@@ -42,8 +42,14 @@ class MessageService
         return DB::transaction(function () use ($conversation, $conversationId, $sender, $data, $file) {
             $fileUrl = null;
             if ($file) {
-                $path = $file->store('messages', 'supabase');
-                $fileUrl = Storage::disk('supabase')->url($path);
+                try {
+                    $path = $file->store('messages', 'supabase');
+                    if ($path) {
+                        $fileUrl = Storage::disk('supabase')->url($path);
+                    }
+                } catch (\Exception $e) {
+                    $fileUrl = null;
+                }
             }
 
             $message = $this->messageRepository->create([

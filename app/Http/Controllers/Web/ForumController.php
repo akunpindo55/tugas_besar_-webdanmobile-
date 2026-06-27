@@ -114,11 +114,17 @@ class ForumController extends Controller
             $mediaData = [];
             if ($request->hasFile('media')) {
                 foreach ($request->file('media') as $file) {
-                    $path = $file->store('forum-topics', 'supabase');
-                    $mediaData[] = [
-                        'file_url' => Storage::disk('supabase')->url($path),
-                        'media_type' => 'image',
-                    ];
+                    try {
+                        $path = $file->store('forum-topics', 'supabase');
+                        if ($path) {
+                            $mediaData[] = [
+                                'file_url' => Storage::disk('supabase')->url($path),
+                                'media_type' => 'image',
+                            ];
+                        }
+                    } catch (\Exception $e) {
+                        continue;
+                    }
                 }
             }
 
@@ -169,11 +175,17 @@ class ForumController extends Controller
             $mediaData = [];
             if ($request->hasFile('media')) {
                 foreach ($request->file('media') as $file) {
-                    $path = $file->store('forum-comments', 'supabase');
-                    $mediaData[] = [
-                        'file_url' => Storage::disk('supabase')->url($path),
-                        'media_type' => 'image',
-                    ];
+                    try {
+                        $path = $file->store('forum-comments', 'supabase');
+                        if ($path) {
+                            $mediaData[] = [
+                                'file_url' => Storage::disk('supabase')->url($path),
+                                'media_type' => 'image',
+                            ];
+                        }
+                    } catch (\Exception $e) {
+                        continue;
+                    }
                 }
             }
 
