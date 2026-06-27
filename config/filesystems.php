@@ -62,14 +62,14 @@ return [
 
         'supabase' => [
             'driver' => 's3',
-            'key' => env('6654312c3991bc373b2b8719d1d9f0ef'),
-            'secret' => env('4a46a80d80da26dbb5408e77ec1a07be61512e0915095f66ce4e6948d7c4f19b'),
+            'key' => env('SUPABASE_KEY'),
+            'secret' => env('SUPABASE_SECRET'),
             'region' => env('SUPABASE_REGION', 'ap-southeast-1'),
-            'bucket' => env('campus connect'),
-            'endpoint' => env('https://noippusbjnysdlpmyicx.storage.supabase.co/storage/v1/s3'),
-            'use_path_style_endpoint' => true, // Wajib bernilai true untuk Supabase
+            'bucket' => env('SUPABASE_BUCKET'),
+            'endpoint' => env('SUPABASE_ENDPOINT'),
+            'use_path_style_endpoint' => true,
             'visibility' => 'public',
-],
+        ],
 
 
     ],

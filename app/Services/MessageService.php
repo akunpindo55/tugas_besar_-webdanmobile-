@@ -10,6 +10,7 @@ use App\Repositories\Contracts\MessageRepositoryInterface;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class MessageService
 {
@@ -41,8 +42,8 @@ class MessageService
         return DB::transaction(function () use ($conversation, $conversationId, $sender, $data, $file) {
             $fileUrl = null;
             if ($file) {
-                $path = $file->store('messages', 'public');
-                $fileUrl = asset('storage/' . $path);
+                $path = $file->store('messages', 'supabase');
+                $fileUrl = Storage::disk('supabase')->url($path);
             }
 
             $message = $this->messageRepository->create([

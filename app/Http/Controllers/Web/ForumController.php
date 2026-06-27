@@ -7,6 +7,7 @@ use App\Models\Forum;
 use App\Models\ForumTopic;
 use App\Services\ForumService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ForumController extends Controller
 {
@@ -113,9 +114,9 @@ class ForumController extends Controller
             $mediaData = [];
             if ($request->hasFile('media')) {
                 foreach ($request->file('media') as $file) {
-                    $path = $file->store('forum-topics', 'public');
+                    $path = $file->store('forum-topics', 'supabase');
                     $mediaData[] = [
-                        'file_url' => asset('storage/' . $path),
+                        'file_url' => Storage::disk('supabase')->url($path),
                         'media_type' => 'image',
                     ];
                 }
@@ -168,9 +169,9 @@ class ForumController extends Controller
             $mediaData = [];
             if ($request->hasFile('media')) {
                 foreach ($request->file('media') as $file) {
-                    $path = $file->store('forum-comments', 'public');
+                    $path = $file->store('forum-comments', 'supabase');
                     $mediaData[] = [
-                        'file_url' => asset('storage/' . $path),
+                        'file_url' => Storage::disk('supabase')->url($path),
                         'media_type' => 'image',
                     ];
                 }

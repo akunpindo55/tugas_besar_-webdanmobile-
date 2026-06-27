@@ -128,9 +128,9 @@ class ForumController extends ApiController
             $mediaData = [];
             if ($request->hasFile('file')) {
                 $file = $request->file('file');
-                $path = $file->store('forum/topics', 'public');
+                $path = $file->store('forum/topics', 'supabase');
                 $mediaData[] = [
-                    'file_url' => asset('storage/' . $path),
+                    'file_url' => Storage::disk('supabase')->url($path),
                     'media_type' => $file->getMimeType(),
                 ];
             }
@@ -169,9 +169,9 @@ class ForumController extends ApiController
             $mediaData = [];
             if ($request->hasFile('file')) {
                 $file = $request->file('file');
-                $path = $file->store('forum/comments', 'public');
+                $path = $file->store('forum/comments', 'supabase');
                 $mediaData[] = [
-                    'file_url' => asset('storage/' . $path),
+                    'file_url' => Storage::disk('supabase')->url($path),
                     'media_type' => $file->getMimeType(),
                 ];
             }

@@ -26,14 +26,8 @@ class UserService
 
     public function updateAvatar(User $user, $file): User
     {
-        // Delete old avatar if exists
-        if ($user->avatar) {
-            $oldPath = str_replace(asset('storage/'), '', $user->avatar);
-            Storage::disk('public')->delete($oldPath);
-        }
-
-        $path = $file->store('avatars', 'public');
-        $url = asset('storage/' . $path);
+        $path = $file->store('avatars', 'supabase');
+        $url = Storage::disk('supabase')->url($path);
 
         return $this->userRepository->update($user, ['avatar' => $url]);
     }

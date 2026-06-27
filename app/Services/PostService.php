@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Repositories\Contracts\PostRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class PostService
@@ -32,8 +33,8 @@ class PostService
             ]);
 
             foreach ($mediaFiles as $file) {
-                $path = $file->store('posts', 'public');
-                $url = asset('storage/' . $path);
+                $path = $file->store('posts', 'supabase');
+                $url = Storage::disk('supabase')->url($path);
                 
                 // Simple mime type detection to separate image/video
                 $mime = $file->getMimeType();
