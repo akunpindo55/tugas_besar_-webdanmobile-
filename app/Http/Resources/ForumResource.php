@@ -14,7 +14,7 @@ class ForumResource extends JsonResource
             'name' => $this->name,
             'description' => $this->description,
             'created_by' => $this->created_by,
-            'creator' => new UserResource($this->whenLoaded('creator')),
+            'creator' => $this->whenLoaded('creator', fn() => new UserResource($this->creator)),
             'is_private' => (bool) $this->is_private,
             'members_count' => $this->members_count ?? $this->members()->count(),
             'topics_count' => $this->topics_count ?? $this->topics()->count(),
