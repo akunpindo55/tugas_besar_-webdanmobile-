@@ -167,7 +167,7 @@ class MessageService
             throw new \Exception('Anda hanya dapat menghapus pesan Anda sendiri.');
         }
 
-        // Broadcast MessageDeleted event if needed, skipped for simplicity
+        StorageHelper::deleteFileByUrl($message->file_url);
         $message->delete();
     }
 }

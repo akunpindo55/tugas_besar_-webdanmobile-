@@ -217,6 +217,7 @@ class ForumService
             throw new \Exception('Anda tidak memiliki izin untuk menghapus topik ini.');
         }
 
+        StorageHelper::deleteFileByUrl($topic->file_url);
         $this->forumRepository->deleteTopic($topic);
     }
 
@@ -290,6 +291,7 @@ class ForumService
             throw new \Exception('Anda hanya dapat menghapus komentar Anda sendiri.');
         }
 
+        StorageHelper::deleteFileByUrl($comment->file_url);
         $this->forumRepository->deleteComment($comment);
     }
 
@@ -305,6 +307,17 @@ class ForumService
             throw new \Exception('Hanya pemilik forum yang dapat menghapus forum.');
         }
 
-        $this->forumRepository->deleteForum($forum);
+        DB::transaction(function () use ($forum) {
+            $forum->load('topics.comments');
+
+            foreach ($forum->topics as $topic) {
+                StorageHelper::deleteFileByUrl($topic->file_url);
+                foreach ($topic->comments as $comment) {
+                    StorageHelper::deleteFileByUrl($comment->file_url);
+                }
+            }
+
+            $this->forumRepository->deleteForum($forum);
+        });
     }
 }

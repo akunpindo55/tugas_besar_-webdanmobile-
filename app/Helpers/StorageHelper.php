@@ -24,4 +24,23 @@ class StorageHelper
             return null;
         }
     }
+
+    public static function deleteFileByUrl(?string $url, string $disk = 'supabase'): void
+    {
+        if (!$url) return;
+
+        $endpoint = rtrim(config("filesystems.disks.{$disk}.endpoint"), '/');
+        $endpoint = str_replace('/s3', '/object/public', $endpoint);
+        $bucket = config("filesystems.disks.{$disk}.bucket");
+        $prefix = "$endpoint/$bucket/";
+
+        if (str_starts_with($url, $prefix)) {
+            $path = substr($url, strlen($prefix));
+            try {
+                Storage::disk($disk)->delete($path);
+            } catch (\Exception $e) {
+                // ignore
+            }
+        }
+    }
 }

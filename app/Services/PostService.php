@@ -53,7 +53,14 @@ class PostService
 
     public function deletePost(User $user, Post $post): void
     {
-        $this->postRepository->delete($post);
+        $post->load('media');
+
+        DB::transaction(function () use ($post) {
+            foreach ($post->media as $media) {
+                StorageHelper::deleteFileByUrl($media->media_url);
+            }
+            $this->postRepository->delete($post);
+        });
     }
 
     public function commentPost(User $user, int $postId, string $content): PostComment
