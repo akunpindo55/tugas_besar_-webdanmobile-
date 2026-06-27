@@ -19,8 +19,8 @@ class ForumResource extends JsonResource
             'members_count' => $this->members_count ?? $this->members()->count(),
             'topics_count' => $this->topics_count ?? $this->topics()->count(),
             'members' => UserResource::collection($this->whenLoaded('members')),
-            'created_at' => $this->created_at->toIso8601String(),
-            'updated_at' => $this->updated_at->toIso8601String(),
+            'created_at' => $this->created_at?->toIso8601String(),
+            'updated_at' => $this->updated_at?->toIso8601String(),
         ];
     }
 }
